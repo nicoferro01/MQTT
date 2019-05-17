@@ -1,6 +1,8 @@
 import paho.mqtt.client as mqtt
+import time
+import master
 
-global temperatura,altitudine,pressione,luce
+i=0
 
 def on_connect(client, userdata, flags, rc):
 	print('Connessione al server Calvino...: {}'.format(mqtt.connack_string(rc)))
@@ -10,29 +12,41 @@ def on_subscribe(client, userdata, mid, granted_qos):
 	print('Avviato con QoS: {}'.format(granted_qos[0]))
 
 def on_message(client, userdata, msg):
-    global temperatura, altitudine, pressione, luce, firstRun, i
-    if firstRun==True:
-        i=0
-        temperatura =[]
-        altitudine=[]
-        pressione=[]
-        luce=[]
-        firstRun=False
+    global i
     if msg.topic == "/calvino-05/temperatura":
-        temperatura.append(float(msg.payload.decode()))
-        i += 1
+        master.temperaturaIst=float(msg.payload.decode())
+        if i%20==0:
+            master.temperatura1mn = master.temperaturaIst
+        if i%200==0:
+            master.temperatura10mn = master.temperaturaIst
+        if i%1200==0:
+            master.temperatura1hr = master.temperaturaIst
     elif msg.topic == "/calvino-05/altitudine":
-        altitudine.append(float(msg.payload.decode()))
-        i += 1
+        master.altitudineIst=(float(msg.payload.decode()))
+        if i % 20 == 0:
+            master.altitudine1mn = master.altitudineIst
+        if i % 200 == 0:
+            master.altitudine10mn = master.altitudineIst
+        if i % 1200 == 0:
+            master.altitudine1hr = master.altitudineIst
     elif msg.topic == "/calvino-05/pressione":
-        pressione.append(float(msg.payload.decode()))
-        i += 1
+        master.pressioneIst = (float(msg.payload.decode()))
+        if i % 20 == 0:
+            master.pressione1mn = master.pressioneIst
+        if i % 200 == 0:
+            master.pressione10mn = master.pressioneIst
+        if i % 1200 == 0:
+            master.pressione1hr = master.pressioneIst
     elif msg.topic == "/calvino-05/luce":
-        luce.append(float(msg.payload.decode()))
-        i += 1
-    if i == 250:
-        print('reset variabili avvenuto')
-        firstRun=True
+        master.luceIst = (float(msg.payload.decode()))
+        if i % 20 == 0:
+            master.luce1mn = master.luceIst
+        if i % 200 == 0:
+            master.luce10mn = master.luceIst
+        if i % 1200 == 0:
+            master.luce1hr = master.luceIst
+        i+=1
+        print(i)
 
 def mqttStart():
 	client = mqtt.Client(protocol = mqtt.MQTTv311)
@@ -47,7 +61,3 @@ def mqttStart():
 		client.loop_forever()
 	except KeyboardInterrupt:
 		print()
-
-
-if __name__ == '__main__':
-	mqttStart()
